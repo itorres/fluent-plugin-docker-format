@@ -7,6 +7,11 @@ module Fluent
     config_param :container_id, :string
     config_param :docker_containers_path, :string, :default => '/var/lib/docker/containers'
 
+    # To support Fluentd v0.10.57 or earlier
+    unless method_defined?(:router)
+      define_method("router") { Fluent::Engine }
+    end
+
     def configure(conf)
       super
       @id_to_name = {}
@@ -14,7 +19,7 @@ module Fluent
 
     def emit(tag, es, chain)
       es.each do |time,record|
-        Engine.emit(interpolate_tag(tag), time, format_record(tag, record))
+        router.emit(interpolate_tag(tag), time, format_record(tag, record))
       end
 
       chain.next
